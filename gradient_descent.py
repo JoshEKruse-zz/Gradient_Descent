@@ -1,4 +1,5 @@
 import numpy as np
+from sklearn.preprocessing import scale
 
 # function: calc_gradient
 # calculates the gradient for a specific weightVector
@@ -51,3 +52,23 @@ def gradient_descent( X, y, stepSize, maxIterations) :
 #X = np.array([[1, 2, 3], [3, 4, 5]])
 #y = np.array([0,1])
 #print(gradient_descent(X, y, 0.1, 50))
+
+def read_csv() :
+    # read data from csv
+    all_data = np.genfromtxt('spam.data', delimiter=" ")
+    # get size of data
+    data_size = all_data.shape[1] - 1
+    # set inputs to everything but last col, and scale
+    inputs = np.delete(all_data, data_size, axis=1)
+    inputs_scaled = scale(inputs)
+    # set outputs to last col of data
+    outputs = all_data[:,data_size]
+
+    #print(all_data)
+    #print(inputs)
+    #print(inputs_scaled)
+    #print(outputs)
+
+    print(gradient_descent(inputs_scaled, outputs, 0.1, 100))
+
+read_csv()
