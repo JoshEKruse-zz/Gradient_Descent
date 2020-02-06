@@ -13,7 +13,7 @@ def calc_gradient(weightVector, y_tild, X) :
 
     sum = 0
     for index in range(size) :
-        sum += (-y_tild[index] * X[index]) / (1 + np.exp(y_tild[index] * weightVector * X[index]))
+        sum += (-y_tild[index] * X[index]) / (1 + np.exp(y_tild[index] * weightVector.T * X[index]))
     mean = sum / size
 
     #m = X.shape[0]
@@ -57,6 +57,7 @@ def gradient_descent( X, y, stepSize, maxIterations) :
 
     return weightMatrix
 
+# function sigmoid
 def sigmoid(x) :
     x = 1 / (1 + np.exp(-x))
     return x
@@ -82,16 +83,18 @@ print("{: >11} {: >4} {: >4}".format("test", np.sum(y_test==0), np.sum(y_test==1
 print("{: >11} {: >4} {: >4}".format("validation", np.sum(y_val==0), np.sum(y_val==1)))
 
 # get weightMatrix
-maxIterations = 500
-weightMatrix = gradient_descent(X_train, y_train, 0.2, maxIterations)
+maxIterations = 400
+weightMatrix = gradient_descent(X_train, y_train, 0.1, maxIterations)
 
+# vectorize sigmoid function to pass on prediction matrix
 sig_v = np.vectorize(sigmoid)
 
 # calculate predicted matrix, round each answer
 train_pred = np.dot( X_train, weightMatrix)
-val_pred = np.around(np.dot( X_val, weightMatrix))
-test_pred = np.around(np.dot( X_test, weightMatrix))
+val_pred = np.dot( X_val, weightMatrix)
+test_pred = np.dot( X_test, weightMatrix)
 
+# pass sigmoid function onto prediction and round
 train_pred = np.around(sig_v(train_pred))
 val_pred = np.around(sig_v(val_pred))
 test_pred = np.around(sig_v(test_pred))
@@ -106,74 +109,90 @@ for index in range(maxIterations):
 train_min_index, train_min_value = min(enumerate(train_result), key=operator.itemgetter(1))
 val_min_index, val_min_value = min(enumerate(val_result), key=operator.itemgetter(1))
 
+print(train_result)
+print(val_result)
+
+# graph percent error
 fig = pyplot.figure()
 ax = fig.add_subplot(111)
 line1, = ax.plot(train_result, "g-", label='train')
-ax.annotate('train min', xy=(train_min_index, train_min_value), xytext=(train_min_index, train_min_value-.1),
+ax.annotate('train min', xy=(train_min_index, train_min_value), xytext=(train_min_index, train_min_value),
             arrowprops=dict(facecolor='green', shrink=0.05),)
 line2, = ax.plot(val_result, "r-", label='validation')
-ax.annotate('validation min', xy=(val_min_index, val_min_value), xytext=(val_min_index, val_min_value+.1),
+ax.annotate('validation min', xy=(val_min_index, val_min_value), xytext=(val_min_index, val_min_value),
             arrowprops=dict(facecolor='red', shrink=0.05),)
 ax.set_ylabel("Percent")
 ax.set_xlabel("Iterations")
 ax.set_title("Percent Error")
-ax.set_ylim(0,.8)
+#ax.set_ylim(0,.8)
 ax.legend()
 pyplot.show()
 
 # calculate logistic loss
-train_results = []
+train_loss_results = []
 for index in range(maxIterations) :
-    train_results.append( sklearn.metrics.log_loss( y_train, train_pred[:,index]) )
-val_results = []
+    train_loss_results.append( sklearn.metrics.log_loss( y_train, train_pred[:,index]) )
+val_loss_results = []
 for index in range(maxIterations):
-    val_results.append(sklearn.metrics.log_loss( y_val, val_pred[:, index]))
-train_min = min(train_result)
-val_min = min(val_result)
-train_min_index, train_min_value = min(enumerate(train_result), key=operator.itemgetter(1))
-val_min_index, val_min_value = min(enumerate(val_result), key=operator.itemgetter(1))
+    val_loss_results.append(sklearn.metrics.log_loss( y_val, val_pred[:, index]))
+train_min_index, train_min_value = min(enumerate(train_loss_results), key=operator.itemgetter(1))
+val_min_index, val_min_value = min(enumerate(val_loss_results), key=operator.itemgetter(1))
 
+# plot logistic loss
 fig = pyplot.figure()
 ax = fig.add_subplot(111)
-line1, = ax.plot(train_result, "g-", label='train')
-ax.annotate('train min', xy=(train_min_index, train_min_value), xytext=(train_min_index, train_min_value-.1),
+line1, = ax.plot(train_loss_results, "g-", label='train')
+ax.annotate('train min', xy=(train_min_index, train_min_value), xytext=(train_min_index, train_min_value),
             arrowprops=dict(facecolor='green', shrink=0.05),)
-line2, = ax.plot(val_result, "r-", label='validation')
-ax.annotate('validation min', xy=(val_min_index, val_min_value), xytext=(val_min_index, val_min_value+.1),
+line2, = ax.plot(val_loss_results, "r-", label='validation')
+ax.annotate('validation min', xy=(val_min_index, val_min_value), xytext=(val_min_index, val_min_value),
             arrowprops=dict(facecolor='red', shrink=0.05),)
 
 ax.set_ylabel("Loss")
 ax.set_xlabel("Iterations")
 ax.set_title("Logistic Loss")
-ax.set_ylim(0,.8)
+#ax.set_ylim(0,.8)
 ax.legend()
 pyplot.show()
 
+# use minimum validation to grab best prediction vector
 best_tr_pred = train_pred[:,val_min_index]
 best_va_pred = val_pred[:,val_min_index]
 best_te_pred = test_pred[:,val_min_index]
 
-zero_vector = np.zeros(100)
-
-print(np.mean(zero_vector == zero_vector))
-
+# calculate logistic regression train error
 train_error = int(np.mean(y_train != best_tr_pred) * 100)
 val_error = int(np.mean(y_val != best_va_pred) * 100)
 test_error = int(np.mean(y_test != best_te_pred) * 100)
 
-baseline_train = np.empty(np.sum(y_train == 0))
+# initalize an empty vector for baseline
+baseline_train = []
+baseline_val = []
+baseline_test = []
 
+# add baseline values to vector
 for index in range(y_train.shape[0]) :
     if(y_train[index] == 0) :
-        np.append(baseline_train, best_tr_pred[index])
+        baseline_train.append(best_tr_pred[index])
+for index in range(y_val.shape[0]) :
+    if(y_val[index] == 0) :
+        baseline_val.append(best_va_pred[index])
+for index in range(y_test.shape[0]) :
+    if(y_test[index] == 0) :
+        baseline_test.append(best_te_pred[index])
 
-y_baseline = np.zeros(baseline_train.shape[0])
+# create zero vector for y baseline
+y_train_baseline = np.zeros(len(baseline_train))
+y_val_baseline = np.zeros(len(baseline_val))
+y_test_baseline = np.zeros(len(baseline_test))
 
-base_train_error = np.mean(y_baseline != baseline_train)
-print(base_train_error)
+# calculate baseline error
+base_train_error = int(np.mean(y_train_baseline != baseline_train)*100)
+base_val_error = int(np.mean(y_val_baseline != baseline_val)*100)
+base_test_error = int(np.mean(y_test_baseline != baseline_test)*100)
 
-# create log reg table of errors
+# create log reg table of errors, baseline errors
 print("{: >11} {: >9} {: >9}".format("", "log reg", "baseline"))
 print("{: >11} {: >9} {: >9}".format("train", str(train_error) + "%", str(base_train_error) + "%"))
-print("{: >11} {: >9} {: >9}".format("validation", str(val_error) + "%",""))
-print("{: >11} {: >9} {: >9}".format("test", str(test_error) + "%", ""))
+print("{: >11} {: >9} {: >9}".format("validation", str(val_error) + "%", str(base_val_error) + "%"))
+print("{: >11} {: >9} {: >9}".format("test", str(test_error) + "%", str(base_test_error) + "%"))
