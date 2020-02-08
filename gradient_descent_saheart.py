@@ -212,6 +212,21 @@ pyplot.plot(log_roc[0][0], log_roc[0][1], "b-", label="Logistic Regression Set 1
 pyplot.plot(log_roc[1][0], log_roc[1][1], "b-", label="Logistic Regression Set 2") # plot logistic regression
 pyplot.plot(log_roc[2][0], log_roc[2][1], "b-", label="Logistic Regression Set 3") # plot logistic regression
 
+fpr = log_roc[0][0]
+tpr = log_roc[0][1]
+size = int(fpr.shape[0]/2)
+pyplot.plot(fpr[size], tpr[size], "ro")
+
+fpr = log_roc[1][0]
+tpr = log_roc[1][1]
+size = int(fpr.shape[0]/2)
+pyplot.plot(fpr[size], tpr[size], "ro")
+
+fpr = log_roc[2][0]
+tpr = log_roc[2][1]
+size = int(fpr.shape[0]/2)
+pyplot.plot(fpr[size], tpr[size], "ro")
+
 pyplot.plot(fpr_base, tpr_base, "m-", label="Baseline") # plot baseline
 pyplot.xlabel('False Positive Rate')
 pyplot.ylabel('True Positive Rate')

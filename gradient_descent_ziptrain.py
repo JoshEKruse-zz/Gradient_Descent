@@ -72,8 +72,8 @@ def driver(X_train, y_train, X_test, y_test, X_val, y_val):
     print("{: >11} {: >4} {: >4}".format("validation", np.sum(y_val == 0), np.sum(y_val == 1)))
 
     # get weightMatrix
-    maxIterations = 500
-    weightMatrix = gradient_descent(X_train, y_train, 0.05, maxIterations)
+    maxIterations = 1000
+    weightMatrix = gradient_descent(X_train, y_train, 0.1, maxIterations)
 
     # vectorize sigmoid function to pass on prediction matrix
     sig_v = np.vectorize(sigmoid)
@@ -174,14 +174,22 @@ def driver(X_train, y_train, X_test, y_test, X_val, y_val):
 
     return weightMatrix, val_min_index, y_test_baseline
 
+tpr = np.zeros(10)
+tpr_index = np.where(np.around(tpr, 1) == 0)
+print(tpr_index[0][0])
+
 # read data from csv
-all_data = np.genfromtxt('spam.data', delimiter=" ")
+all_data = np.genfromtxt('zip.train', delimiter="\t")
 # get size of data
 size = all_data.shape[1] - 1
-# set inputs to everything but last col, and scale
-X = scale(np.delete(all_data, size, axis=1))
-# set outputs to last col of data
-y = all_data[:, size]
+
+print(all_data[:,0])
+
+# set inputs to everything but first col, and scale
+X = scale(np.delete(all_data, 0, axis=1))
+
+# set outputs to first col of data
+y = all_data[:,0]
 
 pyplot.figure()
 
